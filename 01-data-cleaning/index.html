@@ -348,7 +348,8 @@ function runCleaning() {
     const seen = new Set();
     const before = rows.length;
     rows = rows.filter(r => {
-      const key = String(r[0]).trim().toLowerCase();
+      // Use full row as key to detect exact duplicate rows
+      const key = r.map(c => String(c ?? '').trim().toLowerCase()).join('||');
       if (seen.has(key)) return false;
       seen.add(key); return true;
     });
@@ -359,9 +360,10 @@ function runCleaning() {
   let nullCount = 0;
   if (ops.includes('nulls')) {
     const before = rows.length;
-    rows = rows.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+    // A row is empty if ALL cells are null, undefined, or whitespace-only
+    rows = rows.filter(r => r.some(c => c !== null && c !== undefined && String(c).trim() !== ''));
     nullCount = before - rows.length;
-    if (nullCount > 0) changes.push({ text: `${nullCount} filas completamente vacías eliminadas`, warn: true });
+    if (nullCount > 0) changes.push({ text: `${nullCount} filas vacías eliminadas`, warn: true });
   }
 
   rows = rows.map(r => r.map((cell, ci) => {
