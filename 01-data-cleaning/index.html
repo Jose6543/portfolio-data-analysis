@@ -3,363 +3,550 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Data Cleaner — Inmuebles</title>
+<title>DataClean — Limpieza de Excel</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
 
-  header { background: #1a1a1a; color: #fff; padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; }
-  header h1 { font-size: 18px; font-weight: 500; }
-  header span { font-size: 13px; color: #888; }
+header { background: #1a1a1a; color: #fff; padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 28px; height: 28px; background: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.logo-icon svg { width: 16px; height: 16px; color: #1a1a1a; }
+.logo h1 { font-size: 16px; font-weight: 500; }
+.logo span { font-size: 12px; color: #666; margin-left: 4px; }
+.by { font-size: 12px; color: #555; }
 
-  main { max-width: 860px; margin: 2rem auto; padding: 0 1.5rem; }
+main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-  .card { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.step-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+.si { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #999; }
+.si.active { color: #1a1a1a; font-weight: 500; }
+.si.done { color: #2e7d32; }
+.si-dot { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: #999; flex-shrink: 0; }
+.si.active .si-dot { border-color: #1a1a1a; color: #1a1a1a; background: #1a1a1a; color: #fff; }
+.si.done .si-dot { border-color: #2e7d32; background: #2e7d32; color: #fff; }
+.si-line { flex: 1; height: 1px; background: #ddd; margin: 0 8px; min-width: 20px; }
 
-  .drop-zone { border: 1.5px dashed #ccc; border-radius: 10px; padding: 3rem 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-  .drop-zone:hover, .drop-zone.drag-over { border-color: #1a1a1a; background: #fafaf8; }
-  .drop-zone svg { width: 40px; height: 40px; margin-bottom: 12px; color: #999; }
-  .drop-zone p { font-size: 15px; color: #555; margin-bottom: 6px; }
-  .drop-zone small { font-size: 13px; color: #999; }
-  #file-input { display: none; }
+.card { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; }
+.card-title { font-size: 15px; font-weight: 500; margin-bottom: 1.25rem; }
 
-  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
-  .step { background: #f5f5f0; border-radius: 8px; padding: 12px 14px; }
-  .step-num { font-size: 11px; color: #999; margin-bottom: 4px; }
-  .step-label { font-size: 13px; font-weight: 500; color: #1a1a1a; }
-  .step.active { background: #e8f5e9; }
-  .step.done { background: #e8f5e9; }
-  .step.done .step-num { color: #2e7d32; }
+.drop-zone { border: 1.5px dashed #ccc; border-radius: 10px; padding: 3.5rem 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+.drop-zone:hover, .drop-zone.over { border-color: #1a1a1a; background: #fafaf8; }
+.drop-icon { width: 48px; height: 48px; background: #f5f5f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.drop-icon svg { width: 24px; height: 24px; color: #666; }
+.drop-zone h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.drop-zone p { font-size: 13px; color: #888; }
+#file-input { display: none; }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-  .stat { background: #f5f5f0; border-radius: 8px; padding: 14px; }
-  .stat-label { font-size: 12px; color: #777; margin-bottom: 4px; }
-  .stat-value { font-size: 22px; font-weight: 500; color: #1a1a1a; }
-  .stat-value.green { color: #2e7d32; }
-  .stat-value.red { color: #c62828; }
+.file-info { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f5f5f0; border-radius: 8px; margin-top: 1rem; }
+.file-info svg { width: 20px; height: 20px; color: #2e7d32; flex-shrink: 0; }
+.file-name { font-size: 14px; font-weight: 500; }
+.file-meta { font-size: 12px; color: #888; }
 
-  .log { background: #1a1a1a; border-radius: 8px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 12px; color: #aaa; max-height: 200px; overflow-y: auto; }
-  .log-line { margin-bottom: 4px; }
-  .log-line.ok { color: #81c784; }
-  .log-line.info { color: #64b5f6; }
-  .log-line.warn { color: #ffb74d; }
+.col-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.col-card { border: 1px solid #e5e5e0; border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; user-select: none; }
+.col-card:hover { border-color: #aaa; }
+.col-card.selected { border-color: #1a1a1a; background: #fafaf8; }
+.col-card-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.col-card-type { font-size: 11px; color: #888; }
+.col-card-sample { font-size: 11px; color: #bbb; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-check { float: right; width: 16px; height: 16px; border: 1.5px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.col-card.selected .col-check { background: #1a1a1a; border-color: #1a1a1a; }
+.col-check svg { width: 10px; height: 10px; color: #fff; }
 
-  .preview-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { background: #f5f5f0; padding: 8px 12px; text-align: left; font-weight: 500; font-size: 12px; color: #555; border-bottom: 1px solid #e5e5e0; white-space: nowrap; }
-  td { padding: 7px 12px; border-bottom: 0.5px solid #f0f0ec; color: #333; white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafaf8; }
+.ops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.op-card { border: 1px solid #e5e5e0; border-radius: 8px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; user-select: none; display: flex; align-items: flex-start; gap: 12px; }
+.op-card:hover { border-color: #aaa; }
+.op-card.selected { border-color: #1a1a1a; background: #fafaf8; }
+.op-icon { width: 32px; height: 32px; background: #f5f5f0; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.op-card.selected .op-icon { background: #1a1a1a; }
+.op-icon svg { width: 16px; height: 16px; color: #666; }
+.op-card.selected .op-icon svg { color: #fff; }
+.op-text { flex: 1; }
+.op-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.op-desc { font-size: 12px; color: #888; line-height: 1.5; }
 
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; }
-  .btn:hover { opacity: 0.85; }
-  .btn-primary { background: #1a1a1a; color: #fff; }
-  .btn-success { background: #2e7d32; color: #fff; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.ba-panel { border: 1px solid #e5e5e0; border-radius: 8px; overflow: hidden; }
+.ba-header { padding: 8px 14px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.ba-header.before { background: #fff8f0; color: #c0392b; border-bottom: 1px solid #fde8d8; }
+.ba-header.after { background: #f0faf4; color: #27ae60; border-bottom: 1px solid #d4f0e0; }
+.ba-table { overflow-x: auto; }
+.ba-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ba-table th { background: #fafafa; padding: 6px 10px; text-align: left; font-weight: 500; font-size: 11px; color: #666; border-bottom: 1px solid #f0f0ec; white-space: nowrap; }
+.ba-table td { padding: 5px 10px; border-bottom: 0.5px solid #f5f5f0; color: #333; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
 
-  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1rem; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.stat { background: #f5f5f0; border-radius: 8px; padding: 14px; }
+.stat-label { font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 24px; font-weight: 500; }
+.stat-value.green { color: #2e7d32; }
+.stat-value.red { color: #c0392b; }
+.stat-value.blue { color: #1565c0; }
 
-  .section-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 12px; }
-  .hidden { display: none; }
-  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
-  .badge-green { background: #e8f5e9; color: #2e7d32; }
-  .badge-amber { background: #fff8e1; color: #e65100; }
+.changes-list { background: #f9f9f7; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; max-height: 180px; overflow-y: auto; }
+.change-item { font-size: 13px; padding: 4px 0; border-bottom: 0.5px solid #f0f0ec; display: flex; align-items: center; gap: 8px; color: #555; }
+.change-item:last-child { border-bottom: none; }
+.change-dot { width: 6px; height: 6px; border-radius: 50%; background: #2e7d32; flex-shrink: 0; }
+.change-dot.warn { background: #e67e22; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; font-family: inherit; }
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-dark { background: #1a1a1a; color: #fff; }
+.btn-green { background: #2e7d32; color: #fff; }
+.btn-outline { background: #fff; color: #1a1a1a; border: 1px solid #e5e5e0; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.section-sub { font-size: 13px; color: #888; margin-bottom: 1.25rem; margin-top: -0.75rem; }
+.divider { height: 1px; background: #f0f0ec; margin: 1.25rem 0; }
+.select-all { font-size: 13px; color: #1a1a1a; cursor: pointer; text-decoration: underline; margin-bottom: 10px; display: inline-block; }
+
+.hidden { display: none; }
+.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; background: #e8f5e9; color: #2e7d32; }
+.tag.num { background: #e3f2fd; color: #1565c0; }
+.tag.date { background: #fff8e1; color: #e65100; }
+.tag.text { background: #f3e5f5; color: #6a1b9a; }
 </style>
 </head>
 <body>
 
 <header>
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-  <h1>Data Cleaner — Inmuebles</h1>
-  <span>by Jose Vargas</span>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h18v4H3zM3 10h18v4H3zM3 17h18v4H3z"/></svg>
+    </div>
+    <h1>DataClean <span>for Excel</span></h1>
+  </div>
+  <span class="by">by Jose Vargas</span>
 </header>
 
 <main>
-
-  <div class="card" id="upload-card">
-    <p class="section-title">Subir archivo Excel</p>
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v11"/></svg>
-      <p>Arrastra tu archivo Excel aquí</p>
-      <small>o haz click para seleccionar · .xlsx / .xls</small>
-    </div>
-    <input type="file" id="file-input" accept=".xlsx,.xls">
+  <div class="step-indicator" id="step-indicator">
+    <div class="si active" id="si-1"><div class="si-dot">1</div> Subir archivo</div>
+    <div class="si-line"></div>
+    <div class="si" id="si-2"><div class="si-dot">2</div> Configurar</div>
+    <div class="si-line"></div>
+    <div class="si" id="si-3"><div class="si-dot">3</div> Resultado</div>
   </div>
 
-  <div class="card hidden" id="process-card">
-    <p class="section-title">Proceso de limpieza</p>
-    <div class="steps" id="steps-list">
-      <div class="step" id="s1"><div class="step-num">01</div><div class="step-label">Leer archivo</div></div>
-      <div class="step" id="s2"><div class="step-num">02</div><div class="step-label">Eliminar duplicados</div></div>
-      <div class="step" id="s3"><div class="step-num">03</div><div class="step-label">Eliminar vacíos</div></div>
-      <div class="step" id="s4"><div class="step-num">04</div><div class="step-label">Limpiar texto</div></div>
-      <div class="step" id="s5"><div class="step-num">05</div><div class="step-label">Separar Location</div></div>
-      <div class="step" id="s6"><div class="step-num">06</div><div class="step-label">Limpiar precios</div></div>
-      <div class="step" id="s7"><div class="step-num">07</div><div class="step-label">Normalizar estatus</div></div>
-      <div class="step" id="s8"><div class="step-num">08</div><div class="step-label">Exportar limpio</div></div>
+  <!-- STEP 1: UPLOAD -->
+  <div id="screen-1">
+    <div class="card">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v11"/></svg>
+        </div>
+        <h3>Sube tu archivo Excel</h3>
+        <p>Arrastra aquí o haz click para seleccionar · .xlsx / .xls</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls">
+      <div class="file-info hidden" id="file-info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div>
+          <div class="file-name" id="file-name-display"></div>
+          <div class="file-meta" id="file-meta-display"></div>
+        </div>
+      </div>
     </div>
-    <div class="log" id="log"></div>
-  </div>
-
-  <div class="card hidden" id="stats-card">
-    <p class="section-title">Resumen</p>
-    <div class="stats">
-      <div class="stat"><div class="stat-label">Filas originales</div><div class="stat-value" id="stat-original">—</div></div>
-      <div class="stat"><div class="stat-label">Duplicados eliminados</div><div class="stat-value red" id="stat-dupes">—</div></div>
-      <div class="stat"><div class="stat-label">Vacíos eliminados</div><div class="stat-value red" id="stat-nulls">—</div></div>
-      <div class="stat"><div class="stat-label">Filas limpias</div><div class="stat-value green" id="stat-clean">—</div></div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-success" id="btn-download">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-        Descargar Excel limpio
-      </button>
-      <button class="btn btn-primary" id="btn-reset">Limpiar otro archivo</button>
+    <div class="btn-row" style="justify-content: flex-end;">
+      <button class="btn btn-dark" id="btn-next-1" disabled onclick="goStep(2)">Siguiente →</button>
     </div>
   </div>
 
-  <div class="card hidden" id="preview-card">
-    <p class="section-title">Vista previa — primeras 10 filas limpias</p>
-    <div class="preview-wrap">
-      <table id="preview-table"></table>
+  <!-- STEP 2: CONFIGURE -->
+  <div id="screen-2" class="hidden">
+    <div class="card">
+      <div class="card-title">¿Qué columnas tiene tu archivo?</div>
+      <p class="section-sub">Selecciona las columnas que quieres incluir en el resultado limpio.</p>
+      <span class="select-all" onclick="toggleAllCols()">Seleccionar todas</span>
+      <div class="col-grid" id="col-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">¿Qué operaciones quieres aplicar?</div>
+      <p class="section-sub">Elige qué limpieza hacer. Puedes combinar varias.</p>
+      <div class="ops-grid">
+        <div class="op-card selected" data-op="duplicates" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></div>
+          <div class="op-text"><div class="op-title">Eliminar duplicados</div><div class="op-desc">Quita filas repetidas basándose en la primera columna</div></div>
+        </div>
+        <div class="op-card selected" data-op="nulls" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+          <div class="op-text"><div class="op-title">Eliminar filas vacías</div><div class="op-desc">Elimina filas donde todos los campos estén vacíos</div></div>
+        </div>
+        <div class="op-card selected" data-op="trim" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>
+          <div class="op-text"><div class="op-title">Limpiar espacios</div><div class="op-desc">Recorta espacios al inicio y final de cada celda</div></div>
+        </div>
+        <div class="op-card" data-op="uppercase" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>
+          <div class="op-text"><div class="op-title">Texto a mayúsculas</div><div class="op-desc">Convierte todo el texto en mayúsculas</div></div>
+        </div>
+        <div class="op-card" data-op="lowercase" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></div>
+          <div class="op-text"><div class="op-title">Texto a minúsculas</div><div class="op-desc">Convierte todo el texto en minúsculas</div></div>
+        </div>
+        <div class="op-card selected" data-op="numbers" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <div class="op-text"><div class="op-title">Limpiar números</div><div class="op-desc">Elimina $, comas y convierte a número real</div></div>
+        </div>
+        <div class="op-card selected" data-op="dates" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="op-text"><div class="op-title">Limpiar fechas</div><div class="op-desc">Quita la hora de columnas de fecha (00:00:00)</div></div>
+        </div>
+        <div class="op-card" data-op="negatives" onclick="toggleOp(this)">
+          <div class="op-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+          <div class="op-text"><div class="op-title">Corregir negativos</div><div class="op-desc">Convierte números negativos a positivos</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="justify-content: space-between;">
+      <button class="btn btn-outline" onclick="goStep(1)">← Volver</button>
+      <button class="btn btn-dark" onclick="runCleaning()">Limpiar datos →</button>
     </div>
   </div>
 
+  <!-- STEP 3: RESULTS -->
+  <div id="screen-3" class="hidden">
+    <div class="card">
+      <div class="card-title">Resumen de limpieza</div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-label">Filas originales</div><div class="stat-value blue" id="r-original">—</div></div>
+        <div class="stat"><div class="stat-label">Duplicados</div><div class="stat-value red" id="r-dupes">—</div></div>
+        <div class="stat"><div class="stat-label">Vacíos</div><div class="stat-value red" id="r-nulls">—</div></div>
+        <div class="stat"><div class="stat-label">Celdas modificadas</div><div class="stat-value" id="r-cells">—</div></div>
+        <div class="stat"><div class="stat-label">Filas limpias</div><div class="stat-value green" id="r-clean">—</div></div>
+      </div>
+      <div class="changes-list" id="changes-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Vista previa</div>
+      <div class="before-after">
+        <div class="ba-panel">
+          <div class="ba-header before">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Antes
+          </div>
+          <div class="ba-table"><table id="tbl-before"></table></div>
+        </div>
+        <div class="ba-panel">
+          <div class="ba-header after">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+            Después
+          </div>
+          <div class="ba-table"><table id="tbl-after"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="justify-content: space-between;">
+      <button class="btn btn-outline" onclick="goStep(2)">← Ajustar configuración</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="resetAll()">Nuevo archivo</button>
+        <button class="btn btn-green" onclick="downloadClean()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+          Descargar Excel limpio
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
-let cleanData = [];
-let cleanHeaders = [];
+let rawHeaders = [], rawRows = [], fileName = '';
+let cleanHeaders = [], cleanData = [];
+let allColsSelected = true;
 
-function log(msg, type='info') {
-  const el = document.getElementById('log');
-  const line = document.createElement('div');
-  line.className = 'log-line ' + type;
-  line.textContent = '> ' + msg;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('screen-'+i).classList.add('hidden');
+    const si = document.getElementById('si-'+i);
+    si.classList.remove('active','done');
+  });
+  document.getElementById('screen-'+n).classList.remove('hidden');
+  for(let i=1;i<n;i++) document.getElementById('si-'+i).classList.add('done');
+  document.getElementById('si-'+n).classList.add('active');
 }
 
-function stepDone(id) {
-  document.getElementById(id).classList.add('done');
+function detectType(values) {
+  const sample = values.filter(v => v !== '' && v !== null && v !== undefined).slice(0,20);
+  if (!sample.length) return 'text';
+  const numCount = sample.filter(v => !isNaN(String(v).replace(/[$,\s]/g,'')) && String(v).replace(/[$,\s]/g,'') !== '').length;
+  if (numCount / sample.length > 0.7) return 'number';
+  const dateCount = sample.filter(v => /\d{4}|\d{2}[\/\-]\d{2}/.test(String(v))).length;
+  if (dateCount / sample.length > 0.5) return 'date';
+  return 'text';
 }
 
-function show(id) { document.getElementById(id).classList.remove('hidden'); }
-function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function buildColCards(headers, rows) {
+  const grid = document.getElementById('col-grid');
+  grid.innerHTML = '';
+  headers.forEach((h, i) => {
+    const vals = rows.map(r => r[i]);
+    const type = detectType(vals);
+    const sample = vals.find(v => v !== '' && v !== null && v !== undefined) ?? '';
+    const typeLabel = type === 'number' ? 'Número' : type === 'date' ? 'Fecha' : 'Texto';
+    const tagClass = type === 'number' ? 'num' : type === 'date' ? 'date' : 'text';
+    const div = document.createElement('div');
+    div.className = 'col-card selected';
+    div.dataset.idx = i;
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="col-card-name">${h || '(sin nombre)'}</div>
+        <div class="col-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg></div>
+      </div>
+      <span class="tag ${tagClass}">${typeLabel}</span>
+      <div class="col-card-sample">${String(sample).substring(0,30)}</div>
+    `;
+    div.onclick = () => {
+      div.classList.toggle('selected');
+    };
+    grid.appendChild(div);
+  });
+}
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function toggleAllCols() {
+  allColsSelected = !allColsSelected;
+  document.querySelectorAll('.col-card').forEach(c => {
+    if (allColsSelected) c.classList.add('selected');
+    else c.classList.remove('selected');
+  });
+  document.querySelector('.select-all').textContent = allColsSelected ? 'Deseleccionar todas' : 'Seleccionar todas';
+}
 
-async function processFile(file) {
-  show('process-card');
-  document.getElementById('log').innerHTML = '';
+function toggleOp(el) { el.classList.toggle('selected'); }
 
+function getSelectedOps() {
+  return Array.from(document.querySelectorAll('.op-card.selected')).map(el => el.dataset.op);
+}
+
+function getSelectedColIdxs() {
+  return Array.from(document.querySelectorAll('.col-card.selected')).map(el => parseInt(el.dataset.idx));
+}
+
+function runCleaning() {
+  const selectedIdxs = getSelectedColIdxs();
+  if (!selectedIdxs.length) { alert('Selecciona al menos una columna.'); return; }
+  const ops = getSelectedOps();
+  const changes = [];
+  let cellsModified = 0;
+
+  const selHeaders = selectedIdxs.map(i => rawHeaders[i]);
+  let rows = rawRows.map(r => selectedIdxs.map(i => r[i]));
+  const originalCount = rows.length;
+
+  const colTypes = selHeaders.map((h, ci) => {
+    return detectType(rows.map(r => r[ci]));
+  });
+
+  let dupeCount = 0;
+  if (ops.includes('duplicates')) {
+    const seen = new Set();
+    const before = rows.length;
+    rows = rows.filter(r => {
+      const key = String(r[0]).trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+    dupeCount = before - rows.length;
+    if (dupeCount > 0) changes.push({ text: `${dupeCount} filas duplicadas eliminadas`, warn: true });
+  }
+
+  let nullCount = 0;
+  if (ops.includes('nulls')) {
+    const before = rows.length;
+    rows = rows.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+    nullCount = before - rows.length;
+    if (nullCount > 0) changes.push({ text: `${nullCount} filas completamente vacías eliminadas`, warn: true });
+  }
+
+  rows = rows.map(r => r.map((cell, ci) => {
+    let v = cell;
+    const type = colTypes[ci];
+
+    if (ops.includes('trim') && typeof v === 'string') {
+      const trimmed = v.trim();
+      if (trimmed !== v) { cellsModified++; v = trimmed; }
+    }
+    if (ops.includes('numbers') && type === 'number') {
+      const cleaned = String(v).replace(/[$,\s]/g, '');
+      const num = parseFloat(cleaned);
+      if (!isNaN(num) && String(v) !== String(num)) { cellsModified++; v = num; }
+    }
+    if (ops.includes('dates') && type === 'date') {
+      const s = String(v);
+      if (s.includes('00:00:00') || s.includes('T00:00')) {
+        cellsModified++;
+        v = s.replace(/\s*00:00:00.*/, '').replace(/T00:00.*/, '').trim();
+      }
+    }
+    if (ops.includes('uppercase') && type === 'text' && typeof v === 'string') {
+      const up = v.toUpperCase();
+      if (up !== v) { cellsModified++; v = up; }
+    }
+    if (ops.includes('lowercase') && type === 'text' && typeof v === 'string') {
+      const lo = v.toLowerCase();
+      if (lo !== v) { cellsModified++; v = lo; }
+    }
+    if (ops.includes('negatives') && type === 'number' && typeof v === 'number' && v < 0) {
+      cellsModified++; v = Math.abs(v);
+    }
+    return v;
+  }));
+
+  if (ops.includes('trim')) changes.push({ text: 'Espacios recortados en celdas de texto' });
+  if (ops.includes('numbers')) changes.push({ text: 'Símbolos ($, ,) eliminados de columnas numéricas' });
+  if (ops.includes('dates')) changes.push({ text: 'Hora (00:00:00) eliminada de columnas de fecha' });
+  if (ops.includes('uppercase')) changes.push({ text: 'Texto convertido a mayúsculas' });
+  if (ops.includes('lowercase')) changes.push({ text: 'Texto convertido a minúsculas' });
+  if (ops.includes('negatives')) changes.push({ text: 'Números negativos convertidos a positivos' });
+
+  cleanHeaders = selHeaders;
+  cleanData = rows;
+
+  document.getElementById('r-original').textContent = originalCount;
+  document.getElementById('r-dupes').textContent = dupeCount;
+  document.getElementById('r-nulls').textContent = nullCount;
+  document.getElementById('r-cells').textContent = cellsModified;
+  document.getElementById('r-clean').textContent = rows.length;
+
+  const cl = document.getElementById('changes-list');
+  cl.innerHTML = changes.length ? changes.map(c =>
+    `<div class="change-item"><div class="change-dot ${c.warn?'warn':''}"></div>${c.text}</div>`
+  ).join('') : '<div class="change-item"><div class="change-dot"></div>Sin cambios necesarios — los datos ya estaban limpios</div>';
+
+  renderBA();
+  goStep(3);
+}
+
+function renderBA() {
+  const preview = cleanData.slice(0, 6);
+  const rawPreview = rawRows.slice(0, 6);
+  const selIdxs = getSelectedColIdxs();
+
+  function buildTable(tableId, headers, rows) {
+    const t = document.getElementById(tableId);
+    t.innerHTML = '';
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; trh.appendChild(th); });
+    thead.appendChild(trh); t.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    rows.forEach(row => {
+      const tr = document.createElement('tr');
+      row.forEach(cell => { const td = document.createElement('td'); td.textContent = cell ?? ''; tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+    t.appendChild(tbody);
+  }
+
+  buildTable('tbl-before', selIdxs.map(i => rawHeaders[i]), rawPreview.map(r => selIdxs.map(i => r[i])));
+  buildTable('tbl-after', cleanHeaders, preview);
+}
+
+function downloadClean() {
+  const wb = XLSX.utils.book_new();
+  const wsData = [cleanHeaders, ...cleanData];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const numCols = cleanHeaders.length;
+
+  ws['!cols'] = cleanHeaders.map((h, i) => {
+    const maxLen = Math.max(h.length, ...cleanData.slice(0,50).map(r => String(r[i]??'').length));
+    return { wch: Math.min(Math.max(maxLen + 2, 10), 45) };
+  });
+
+  const hStyle = {
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11, name: 'Segoe UI' },
+    fill: { patternType: 'solid', fgColor: { rgb: '1A1A1A' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { bottom: { style: 'thin', color: { rgb: '444444' } } }
+  };
+  const evenStyle = {
+    font: { sz: 10, name: 'Segoe UI' },
+    fill: { patternType: 'solid', fgColor: { rgb: 'FAFAF8' } },
+    alignment: { vertical: 'center' },
+    border: { bottom: { style: 'hair', color: { rgb: 'E5E5E0' } } }
+  };
+  const oddStyle = {
+    font: { sz: 10, name: 'Segoe UI' },
+    fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } },
+    alignment: { vertical: 'center' },
+    border: { bottom: { style: 'hair', color: { rgb: 'E5E5E0' } } }
+  };
+
+  for (let C = 0; C < numCols; C++) {
+    const ref = XLSX.utils.encode_cell({ r: 0, c: C });
+    if (!ws[ref]) ws[ref] = { v: cleanHeaders[C], t: 's' };
+    ws[ref].s = hStyle;
+  }
+  cleanData.forEach((row, R) => {
+    row.forEach((val, C) => {
+      const ref = XLSX.utils.encode_cell({ r: R+1, c: C });
+      const isNum = typeof val === 'number';
+      ws[ref] = { v: val ?? '', t: isNum ? 'n' : 's' };
+      ws[ref].s = R % 2 === 0 ? evenStyle : oddStyle;
+      if (isNum) ws[ref].s = { ...(R%2===0?evenStyle:oddStyle), numFmt: '#,##0.##', alignment: { horizontal:'right', vertical:'center' } };
+    });
+  });
+
+  ws['!rows'] = [{ hpt: 22 }, ...cleanData.map(() => ({ hpt: 18 }))];
+  ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:0,c:numCols-1} }) };
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Datos Limpios');
+  const outName = fileName.replace(/\.xlsx?$/i, '') + '_clean.xlsx';
+  XLSX.writeFile(wb, outName);
+}
+
+function resetAll() {
+  rawHeaders = []; rawRows = []; fileName = '';
+  cleanHeaders = []; cleanData = [];
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-info').classList.add('hidden');
+  document.getElementById('btn-next-1').disabled = true;
+  goStep(1);
+}
+
+function loadFile(file) {
+  fileName = file.name;
   const reader = new FileReader();
-  reader.onload = async (e) => {
-    await sleep(200);
-
-    log('Leyendo ' + file.name, 'info');
+  reader.onload = (e) => {
     const wb = XLSX.read(e.target.result, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-    let headerRow = -1;
+    let headerRow = 0;
     for (let i = 0; i < Math.min(10, raw.length); i++) {
-      const row = raw[i].map(c => String(c).trim().toLowerCase());
-      if (row.includes('referencia') || row.includes('tip') || row.includes('oper')) {
-        headerRow = i; break;
-      }
-    }
-    if (headerRow === -1) headerRow = 0;
-
-    const headers = raw[headerRow].map(c => String(c).trim());
-    let rows = raw.slice(headerRow + 1).filter(r => r.some(c => c !== ''));
-    const originalCount = rows.length;
-    log(`${originalCount} filas encontradas`, 'ok');
-    stepDone('s1');
-    await sleep(300);
-
-    log('Eliminando duplicados por Referencia...', 'info');
-    const refIdx = headers.findIndex(h => h.toLowerCase() === 'referencia');
-    const seen = new Set();
-    let dupeCount = 0;
-    if (refIdx >= 0) {
-      rows = rows.filter(r => {
-        const key = String(r[refIdx]).trim();
-        if (seen.has(key)) { dupeCount++; return false; }
-        seen.add(key); return true;
-      });
-    }
-    log(`${dupeCount} duplicados eliminados`, dupeCount > 0 ? 'warn' : 'ok');
-    stepDone('s2');
-    await sleep(300);
-
-    log('Eliminando filas con campos críticos vacíos...', 'info');
-    const locIdx = headers.findIndex(h => h.toLowerCase().includes('location') || h.toLowerCase().includes('loc'));
-    const beforeNull = rows.length;
-    rows = rows.filter(r => {
-      if (refIdx >= 0 && !String(r[refIdx]).trim()) return false;
-      if (locIdx >= 0 && !String(r[locIdx]).trim()) return false;
-      return true;
-    });
-    const nullCount = beforeNull - rows.length;
-    log(`${nullCount} filas vacías eliminadas`, nullCount > 0 ? 'warn' : 'ok');
-    stepDone('s3');
-    await sleep(300);
-
-    log('Normalizando texto (trim + mayúsculas)...', 'info');
-    const textCols = ['tip','oper','vendedor','estatus'];
-    const textIdxs = headers.map((h,i) => textCols.includes(h.toLowerCase()) ? i : -1).filter(i => i >= 0);
-    rows = rows.map(r => {
-      const nr = [...r];
-      textIdxs.forEach(i => { nr[i] = String(nr[i]).trim().toUpperCase(); });
-      return nr;
-    });
-    log('Texto normalizado', 'ok');
-    stepDone('s4');
-    await sleep(300);
-
-    log('Separando Location en País y Ciudad...', 'info');
-    let paisArr = [], ciudadArr = [];
-    if (locIdx >= 0) {
-      rows.forEach(r => {
-        const parts = String(r[locIdx]).split('|');
-        paisArr.push(parts[1] ? parts[1].trim().toUpperCase() : '');
-        ciudadArr.push(parts[2] ? parts[2].trim().toUpperCase() : '');
-      });
-    }
-    log('Location separado en País y Ciudad', 'ok');
-    stepDone('s5');
-    await sleep(300);
-
-    log('Limpiando columna Precio_venta...', 'info');
-    const precioIdx = headers.findIndex(h => h.toLowerCase().includes('precio'));
-    if (precioIdx >= 0) {
-      rows = rows.map(r => {
-        const nr = [...r];
-        const raw = String(nr[precioIdx]).replace(/[$,\s]/g, '');
-        const num = parseFloat(raw);
-        nr[precioIdx] = isNaN(num) || num <= 0 ? '' : num;
-        return nr;
-      });
-    }
-    log('Precios convertidos a número', 'ok');
-    stepDone('s6');
-    await sleep(300);
-
-    log('Normalizando Estatus (V/P → texto)...', 'info');
-    const estatusIdx = headers.findIndex(h => h.toLowerCase().includes('estatus'));
-    if (estatusIdx >= 0) {
-      rows = rows.map(r => {
-        const nr = [...r];
-        const v = String(nr[estatusIdx]).trim().toUpperCase().split('\n')[0];
-        nr[estatusIdx] = v === 'V' ? 'Vendida' : v === 'P' ? 'En Proceso' : v || 'Desconocido';
-        return nr;
-      });
-    }
-    log('Estatus normalizado', 'ok');
-    stepDone('s7');
-    await sleep(300);
-
-    log('Generando tabla limpia...', 'info');
-
-    const skipCols = ['columna 1','columna 2','columna 3'];
-    const keepIdxs = headers.map((h,i) => skipCols.includes(h.toLowerCase()) ? -1 : i).filter(i => i >= 0);
-
-    let finalHeaders = keepIdxs.map(i => headers[i]);
-    if (locIdx >= 0) {
-      const locPos = keepIdxs.indexOf(locIdx);
-      if (locPos >= 0) {
-        finalHeaders.splice(locPos + 1, 0, 'País', 'Ciudad');
-      }
+      const row = raw[i].map(c => String(c).trim());
+      const nonEmpty = row.filter(c => c !== '').length;
+      const nextRow = raw[i+1] ? raw[i+1].filter(c => c !== '').length : 0;
+      if (nonEmpty >= 3 && nextRow >= nonEmpty - 1) { headerRow = i; break; }
     }
 
-    let finalRows = rows.map((r, ri) => {
-      let row = keepIdxs.map(i => r[i]);
-      if (locIdx >= 0) {
-        const locPos = keepIdxs.indexOf(locIdx);
-        if (locPos >= 0) {
-          row.splice(locPos + 1, 0, paisArr[ri] || '', ciudadArr[ri] || '');
-        }
-      }
-      return row;
-    });
+    rawHeaders = raw[headerRow].map(c => String(c).trim()).filter(h => h !== '');
+    const colCount = rawHeaders.length;
+    rawRows = raw.slice(headerRow + 1)
+      .filter(r => r.some(c => c !== ''))
+      .map(r => r.slice(0, colCount));
 
-    finalRows = finalRows.filter(r => r.some(c => c !== '' && c !== undefined));
+    document.getElementById('file-name-display').textContent = file.name;
+    document.getElementById('file-meta-display').textContent = `${rawRows.length} filas · ${rawHeaders.length} columnas`;
+    document.getElementById('file-info').classList.remove('hidden');
+    document.getElementById('btn-next-1').disabled = false;
 
-    cleanHeaders = finalHeaders;
-    cleanData = finalRows;
-
-    document.getElementById('stat-original').textContent = originalCount;
-    document.getElementById('stat-dupes').textContent = dupeCount;
-    document.getElementById('stat-nulls').textContent = nullCount;
-    document.getElementById('stat-clean').textContent = finalRows.length;
-
-    stepDone('s8');
-    log(`Listo. ${finalRows.length} filas limpias.`, 'ok');
-
-    show('stats-card');
-    renderPreview();
-    show('preview-card');
+    buildColCards(rawHeaders, rawRows);
   };
   reader.readAsArrayBuffer(file);
 }
 
-function renderPreview() {
-  const table = document.getElementById('preview-table');
-  table.innerHTML = '';
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
-  cleanHeaders.forEach(h => {
-    const th = document.createElement('th');
-    th.textContent = h;
-    trh.appendChild(th);
-  });
-  thead.appendChild(trh);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
-  cleanData.slice(0, 10).forEach(row => {
-    const tr = document.createElement('tr');
-    row.forEach(cell => {
-      const td = document.createElement('td');
-      td.textContent = cell;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-}
-
-document.getElementById('btn-download').addEventListener('click', () => {
-  const wsData = [cleanHeaders, ...cleanData];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Datos Limpios');
-  XLSX.writeFile(wb, 'inmuebles_clean.xlsx');
-});
-
-document.getElementById('btn-reset').addEventListener('click', () => {
-  hide('process-card');
-  hide('stats-card');
-  hide('preview-card');
-  document.getElementById('file-input').value = '';
-  cleanData = [];
-  cleanHeaders = [];
-});
-
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) processFile(e.target.files[0]);
-});
-
+document.getElementById('file-input').addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
 const dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault();
-  dz.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
-});
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
 </script>
 </body>
 </html>
